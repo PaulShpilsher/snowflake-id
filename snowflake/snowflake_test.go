@@ -1,6 +1,7 @@
 package snowflake_test
 
 import (
+	"sync"
 	"testing"
 	"time"
 
@@ -36,6 +37,40 @@ func TestNewGeneratorWithTimeshift(t *testing.T) {
 	if s == nil {
 		t.Error("generator is nil")
 	}
+}
+
+func TestConcurrentIDGenerationUniqueness(t *testing.T) {
+
+	s, _ := snowflake.NewGenerator(0)
+
+	count := 100000
+	ch := make(chan int64, count)
+
+	var wg sync.WaitGroup
+	wg.Add(count)
+	for i := 0; i < count; i++ {
+		go func() {
+			defer wg.Done()
+			ch <- s.NextID()
+		}()
+	}
+	wg.Wait()
+	close(ch)
+
+	m := make(map[int64]interface{})
+	for {
+		id, ok := <-ch
+		if !ok {
+			break
+		}
+
+		if _, ok := m[id]; ok {
+			t.Error("not unique id detected")
+			break
+		}
+		m[id] = nil
+	}
+
 }
 
 func TestNewGeneratorWithTimeshiftNegativeTimeshift(t *testing.T) {
