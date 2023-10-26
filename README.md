@@ -1,8 +1,7 @@
 # Snowflake ID
 
-<p>
 Snowflake ID generator Go package
-</p>
+
 
 
 ## What is the Snowflake ID
