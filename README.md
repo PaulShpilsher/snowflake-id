@@ -4,6 +4,7 @@
 Snowflake ID generator Go package
 </p>
 
+
 ## What is the Snowflake ID
 
 From [wikipedia](https://en.wikipedia.org/wiki/Snowflake_ID)
@@ -14,7 +15,9 @@ Snowflakes are 64 bits in binary. (Only 63 are used to fit in a signed integer.)
 
 Snowflakes are sortable by time, because they are based on the time they were created Additionally, the time a snowflake was created can be calculated from the snowflake. This can be used to get snowflakes (and their associated objects) that were created before or after a particular date.
 
-![Screenshot from 2023-10-26 12-28-49](https://github.com/PaulShpilsher/snowflake-id/assets/20777554/f033e6cf-b31a-433e-acdd-0ead4c5eb0c3)
+```
+    | 1 bit unused | 41 bit timestamp | 10 bit nodeID | 12 bit sequence |
+```
 
 
 # Usage
@@ -36,28 +39,28 @@ Create main.go file
 package main
 
 import (
-	"fmt"
+    "fmt"
 
-	"github.com/PaulShpilsher/snowflake-id/snowflake"
+    "github.com/PaulShpilsher/snowflake-id/snowflake"
 )
 
 func main() {
 
-	// define a node identifier, aka machine ID
-	machineID := 1
+    // define a node identifier, aka machine ID
+    machineID := 1
 
-	// Create a new snowflake ID generator
-	idGenerator, err := snowflake.NewGenerator(machineID)
-	if err != nil {
-		panic(err)
-	}
+    // Create a new snowflake ID generator
+    idGenerator, err := snowflake.NewGenerator(machineID)
+    if err != nil {
+        panic(err)
+    }
 
-	// get a couple of snowflake IDs
-	id1 := idGenerator.NextID()
-	id2 := idGenerator.NextID()
+    // get a couple of snowflake IDs
+    id1 := idGenerator.NextID()
+    id2 := idGenerator.NextID()
 
-	// print them out
-	fmt.Println(id1, id2)
+    // print them out
+    fmt.Println(id1, id2)
 }
 ```
 
