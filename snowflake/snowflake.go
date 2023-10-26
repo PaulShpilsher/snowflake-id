@@ -62,29 +62,13 @@ func NewGeneratorWithTimeshift(nodeID int, timeshift int64) (SnowflakeGenerator,
 	}, nil
 }
 
-var depth = 0
-
-func decDepth() {
-	depth--
-}
-func incDepth() {
-	depth++
-}
-
 // NextID returns the next Snowflake ID
 func (s *snowflake) NextID() int64 {
-
-	now := getUnixMilli()
 
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	incDepth()
-	defer decDepth()
-
-	if depth > 1 {
-		panic("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")
-	}
+	now := getUnixMilli()
 
 	if now != s.timestamp {
 		s.timestamp = now

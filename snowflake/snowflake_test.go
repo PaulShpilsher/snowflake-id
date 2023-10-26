@@ -39,6 +39,18 @@ func TestNewGeneratorWithTimeshift(t *testing.T) {
 	}
 }
 
+func TestNewGeneratorWithTimeshiftNegativeTimeshift(t *testing.T) {
+	if _, err := snowflake.NewGeneratorWithTimeshift(0, -1); err != snowflake.ErrInvalidTimeshiftArgument {
+		t.Error("did not get expected error ErrInvalidTimeshiftArgument")
+	}
+}
+
+func TestNewGeneratorWithTimeshiftFutureTimeshift(t *testing.T) {
+	if _, err := snowflake.NewGeneratorWithTimeshift(0, time.Now().UnixMilli()+1000); err != snowflake.ErrInvalidTimeshiftArgument {
+		t.Error("did not get expected error ErrInvalidTimeshiftArgument")
+	}
+}
+
 func TestConcurrentIDGenerationUniqueness(t *testing.T) {
 
 	s, _ := snowflake.NewGenerator(0)
@@ -71,16 +83,4 @@ func TestConcurrentIDGenerationUniqueness(t *testing.T) {
 		m[id] = nil
 	}
 
-}
-
-func TestNewGeneratorWithTimeshiftNegativeTimeshift(t *testing.T) {
-	if _, err := snowflake.NewGeneratorWithTimeshift(0, -1); err != snowflake.ErrInvalidTimeshiftArgument {
-		t.Error("did not get expected error ErrInvalidTimeshiftArgument")
-	}
-}
-
-func TestNewGeneratorWithTimeshiftFutureTimeshift(t *testing.T) {
-	if _, err := snowflake.NewGeneratorWithTimeshift(0, time.Now().UnixMilli()+1000); err != snowflake.ErrInvalidTimeshiftArgument {
-		t.Error("did not get expected error ErrInvalidTimeshiftArgument")
-	}
 }
