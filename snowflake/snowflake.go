@@ -17,58 +17,61 @@ const (
 
 	nodeIdOffset    = sequenceBits              // Node ID offset to the left
 	timestampOffset = nodeIdBits + sequenceBits // The timestamp offset to the left
+
+	// public
+	DefaultEpoch = int64(1577836800000) // Default epocj unix milleseconds Wed Jan 01 2020 00:00:00 GMT+0000
+	TwitterEpoch = int64(1288834974657) // Twitter epoch unix milliseconds Thu Nov 04 2010 01:42:54 GMT+0000
+
 )
 
 var ErrInvalidNodeIDArgument = errors.New("invalid node ID")
-var ErrInvalidTimeshiftArgument = errors.New("invalid timeshift")
+var ErrInvalidBaseEpochArgument = errors.New("invalid base epoch")
 
 // SnowflakeGenerator interface
 type SnowflakeGenerator interface {
 	NextID() int64 // generates next Snowflake ID
 }
 
-type snowflake struct {
+type snowflakeGenerator struct {
 	mu        sync.Mutex
 	timestamp int64 // last id timestamp in unix milliseconds
-	nodeID    int64 // node id
+	node      int64 // node precalulated as nodeID << nodeIdOffset
 	sequence  int64 // last sequence number for the per the same timestamp
-
-	timeshift int64 // unix milliseconds used in timestamp portion if the snowflake ID as (curent timestamp - timeshift)
-
+	epoch     int64 // unix milliseconds used offset timestamp portion in the snowflake ID  (timestamp - epoch)
 }
 
-// NewGenerator creates a new Snowflake ID generator.
+// NewGenerator creates a new Snowflake ID generator with default epoch.
 // nodeID parameter is the machine or work node identifier range 0 to 1023 inclusive
 func NewGenerator(nodeID int) (SnowflakeGenerator, error) {
-	return NewGeneratorWithTimeshift(nodeID, 0)
+	return NewGeneratorWithEpoch(nodeID, DefaultEpoch)
 }
 
-// NewGeneratorWithTimeshift creates a new Snowflake ID generator with timeshift.
-// nodeID parameter is the machine or work node identifier range 0 to 1023 inclusive.
-// timeshift parameter is in unix milliseconds used to offset the current timestamp portion in snowflake id, i.e. current time - timeshif
-func NewGeneratorWithTimeshift(nodeID int, timeshift int64) (SnowflakeGenerator, error) {
+// NewGeneratorWithEpoch creates a new Snowflake ID generator with timeshift.
+// nodeID parameter machine or work node identifier range 0 to 1023 inclusive.
+// epoch parameter in unix milliseconds used to offset the current timestamp portion in snowflake id, i.e. current time - epoch.
+func NewGeneratorWithEpoch(nodeID int, epoch int64) (SnowflakeGenerator, error) {
 
 	if nodeID < 0 || nodeID > maxNodeID {
 		return nil, ErrInvalidNodeIDArgument
 	}
 
-	if timeshift < 0 || timeshift > getUnixMilli() {
-		return nil, ErrInvalidTimeshiftArgument
+	if epoch < 0 || epoch > time.Now().UnixMilli() {
+		return nil, ErrInvalidBaseEpochArgument
 	}
 
-	return &snowflake{
-		nodeID:    int64(nodeID),
-		timeshift: timeshift,
+	return &snowflakeGenerator{
+		node:  int64(nodeID) << int64(nodeIdOffset),
+		epoch: epoch,
 	}, nil
 }
 
 // NextID returns the next Snowflake ID
-func (s *snowflake) NextID() int64 {
+func (s *snowflakeGenerator) NextID() int64 {
 
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	now := getUnixMilli()
+	now := time.Now().UnixMilli()
 
 	if now != s.timestamp {
 		s.timestamp = now
@@ -76,17 +79,13 @@ func (s *snowflake) NextID() int64 {
 	} else {
 		if s.sequence = (1 + s.sequence) & maxSequence; s.sequence == 0 {
 			// sequence overflow
+			// restart with new timestamp
 			for now <= s.timestamp {
-				now = getUnixMilli()
+				now = time.Now().UnixMilli()
 			}
 			s.timestamp = now
 		}
 	}
 
-	return ((now - s.timeshift) << timestampOffset) | (s.nodeID << nodeIdOffset) | s.sequence
-}
-
-// returns current milliseconds
-func getUnixMilli() int64 {
-	return time.Now().UnixMilli()
+	return ((now - s.epoch) << timestampOffset) | s.node | s.sequence
 }

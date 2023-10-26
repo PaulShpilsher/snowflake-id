@@ -18,19 +18,19 @@ func TestNewGenerator(t *testing.T) {
 	}
 }
 
-func TestNewGeneratorNegativeNodeId(t *testing.T) {
+func TestNewGeneratorWithNegativeNodeId(t *testing.T) {
 	if _, err := snowflake.NewGenerator(-1); err != snowflake.ErrInvalidNodeIDArgument {
 		t.Error("did not get expected error ErrInvalidNodeIDArgument")
 	}
 }
-func TestNewGeneratorToobigNodeId(t *testing.T) {
+func TestNewGeneratorWithNodeIdOverflow(t *testing.T) {
 	if _, err := snowflake.NewGenerator(1024); err != snowflake.ErrInvalidNodeIDArgument {
 		t.Error("did not get expected error ErrInvalidNodeIDArgument")
 	}
 }
 
-func TestNewGeneratorWithTimeshift(t *testing.T) {
-	s, err := snowflake.NewGeneratorWithTimeshift(10, 10000)
+func TestNewGeneratorWithEpoch(t *testing.T) {
+	s, err := snowflake.NewGeneratorWithEpoch(10, snowflake.TwitterEpoch)
 	if err != nil {
 		t.Errorf("failed to create generator. err: %v", err)
 	}
@@ -39,19 +39,20 @@ func TestNewGeneratorWithTimeshift(t *testing.T) {
 	}
 }
 
-func TestNewGeneratorWithTimeshiftNegativeTimeshift(t *testing.T) {
-	if _, err := snowflake.NewGeneratorWithTimeshift(0, -1); err != snowflake.ErrInvalidTimeshiftArgument {
+func TestNewGeneratorWithNegativeEpoch(t *testing.T) {
+	if _, err := snowflake.NewGeneratorWithEpoch(0, -1); err != snowflake.ErrInvalidBaseEpochArgument {
 		t.Error("did not get expected error ErrInvalidTimeshiftArgument")
 	}
 }
 
-func TestNewGeneratorWithTimeshiftFutureTimeshift(t *testing.T) {
-	if _, err := snowflake.NewGeneratorWithTimeshift(0, time.Now().UnixMilli()+1000); err != snowflake.ErrInvalidTimeshiftArgument {
+func TestNewGeneratorWithFutureEpoch(t *testing.T) {
+	futureEpoch := time.Now().UnixMilli() + 1000
+	if _, err := snowflake.NewGeneratorWithEpoch(0, futureEpoch); err != snowflake.ErrInvalidBaseEpochArgument {
 		t.Error("did not get expected error ErrInvalidTimeshiftArgument")
 	}
 }
 
-func TestConcurrentIDGenerationUniqueness(t *testing.T) {
+func TestConcurrentGenerationUniqueness(t *testing.T) {
 
 	s, _ := snowflake.NewGenerator(0)
 
