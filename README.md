@@ -2,7 +2,9 @@
 
 Snowflake ID generator Go package
 
+[![Go Report Card](https://goreportcard.com/badge/github.com/PaulShpilsher/snowflake-id)](https://goreportcard.com/report/github.com/PaulShpilsher/snowflake-id)
 
+<br>
 
 ## What is the Snowflake ID
 
