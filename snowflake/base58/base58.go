@@ -46,7 +46,12 @@ var decodeMap = [...]byte{255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,
 // Decode converts base58 string to  int64 value
 func Decode(s string) (int64, error) {
 
+	if s == "" {
+		return 0, errInvalidInput
+	}
+
 	var n int64
+
 	buf := []byte(s)
 	for _, x := range buf {
 		v := decodeMap[x]
